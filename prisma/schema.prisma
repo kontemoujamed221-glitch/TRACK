@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String          @id @default(uuid())
+  name          String
+  email         String          @unique
+  passwordHash  String
+  role          String          @default("user") // "admin", "user"
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  // Relations
+  customerOrders CustomerOrder[]
+  expenses       Expense[]
+}
+
+model Product {
+  id               String           @id @default(uuid())
+  name             String
+  sku              String           @unique
+  category         String?
+  image            String?          // URL or base64 or placeholder
+  prixVenteActuel  Float            // In XOF
+  status           String           @default("actif") // "actif", "en_rupture", "archive"
+  stockActuel      Int              @default(0)
+  seuilAlerte      Int              @default(5)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  supplierOrders   SupplierOrder[]
+  stockMovements   StockMovement[]
+  customerOrders   CustomerOrder[]
+}
+
+model SupplierOrder {
+  id                   String      @id @default(uuid())
+  productId            String
+  product              Product     @relation(fields: [productId], references: [id])
+  quantity             Int
+  costUnit             Float       // Cost in original currency
+  currency             String      // "USD", "CNY", etc.
+  exchangeRate         Float       // Conversion to XOF
+  transportCustomsFee  Float       // Global shipping and customs fee for this lot in XOF
+  costRevientUnit      Float       // Real calculated unit cost in XOF
+  status               String      @default("commande") // "commande", "en_transit", "recu", "dedouane"
+  dateOrder            DateTime
+  dateReceive          DateTime?
+  supplierName         String?
+  supplierLink         String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model StockMovement {
+  id          String   @id @default(uuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  type        String   // "entree", "sortie", "ajustement"
+  quantity    Int      // Positive value
+  refId       String?  // Reference ID (e.g. SupplierOrder.id or CustomerOrder.id)
+  notes       String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model CustomerOrder {
+  id              String    @id @default(uuid())
+  productId       String
+  product         Product   @relation(fields: [productId], references: [id])
+  quantity        Int
+  clientName      String
+  clientTel       String
+  clientAddress   String?
+  clientCity      String    // e.g. "Dakar", "Thies", etc.
+  source          String    // e.g. "TikTok Ads", "Facebook Ads", "WhatsApp", etc.
+  campaign        String?   // Free text campaign identifier
+  prixVente       Float     // Sale price applied to this order (XOF)
+  status          String    @default("Nouvelle") // "Nouvelle", "Confirmee", "En livraison", "Livree", "Retournee", "Annulee", "Injoignable"
+  courierName     String?   // Delivery driver / service
+  shippingFee     Float     @default(0) // Shipping fee paid to driver (XOF)
+  amountCollected Float     @default(0) // Actual amount collected from client (XOF)
+  dateOrder       DateTime  @default(now())
+  dateDelivery    DateTime?
+  confirmedByTel  Boolean   @default(false)
+  confirmedAt     DateTime?
+  note            String?
+  createdById     String?
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Expense {
+  id           String   @id @default(uuid())
+  category     String   // "Achat marchandise", "Publicite", "Livraison", "Autres frais"
+  subcategory  String?  // e.g. platform name (TikTok Ads), subscription name, etc.
+  amount       Float    // Original amount
+  currency     String   @default("XOF")
+  exchangeRate Float    @default(1.0)
+  amountXof    Float    // Converted to XOF
+  date         DateTime
+  description  String?
+  receiptUrl   String?  // Attachment URL
+  createdById  String?
+  createdBy    User?    @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

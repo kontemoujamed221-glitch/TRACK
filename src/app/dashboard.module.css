@@ -1,0 +1,260 @@
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 20px 24px;
+  border-radius: 16px;
+  margin-bottom: 28px;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dateInputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btnGroupBtn {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnGroupBtn:hover {
+  color: #fff;
+  border-color: rgba(250, 204, 21, 0.4);
+  background: rgba(250, 204, 21, 0.02);
+}
+
+.btnGroupBtnActive {
+  background: var(--accent) !important;
+  color: #000 !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(250, 204, 21, 0.2);
+}
+
+.financialsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.ratesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 992px) {
+  .ratesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .financialsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .ratesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rateCard {
+  background: radial-gradient(100% 100% at 0% 0%, rgba(250, 204, 21, 0.04) 0%, rgba(0, 0, 0, 0) 100%), #101013;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.rateCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(250, 204, 21, 0.25);
+}
+
+.rateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rateLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.rateVal {
+  font-size: 28px;
+  font-weight: 900;
+  margin-top: 10px;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.progressBarYellow {
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+}
+
+.progressBarGreen {
+  background: var(--success);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.progressBarRed {
+  background: var(--danger);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.progressBarInfo {
+  background: var(--info);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 992px) {
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.chartContainer {
+  background: radial-gradient(100% 100% at 0% 0%, rgba(250, 204, 21, 0.03) 0%, rgba(0, 0, 0, 0) 100%), #101013;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.chartTitle {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.8px;
+}
+
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  height: 240px;
+  gap: 8px;
+  padding-top: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.chartBarWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+}
+
+.chartBar {
+  width: 18px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 2px;
+}
+
+.chartBar:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+  transform: scaleY(1.02);
+}
+
+.chartDate {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.valueGreen {
+  color: var(--success) !important;
+}
+
+.valueRed {
+  color: var(--danger) !important;
+}
+
+.valueYellow {
+  color: var(--accent) !important;
+}
+

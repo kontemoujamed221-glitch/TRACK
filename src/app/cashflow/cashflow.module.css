@@ -1,0 +1,161 @@
+.reconciliationSummary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.summaryCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 24px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.summaryLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summaryValue {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 8px;
+}
+
+.summaryValueYellow {
+  color: var(--accent);
+}
+
+.summaryValueWarning {
+  color: var(--danger);
+  text-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+}
+
+.summaryValueSuccess {
+  color: var(--success);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 18px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  align-items: flex-end;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.filterLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.discrepancyRow {
+  background: rgba(239, 68, 68, 0.04) !important;
+}
+
+.discrepancyRow:hover {
+  background: rgba(239, 68, 68, 0.08) !important;
+}
+
+.discrepancyCell {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.exactCell {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.pendingCardList {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pendingCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.cardRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cardRowLabel {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.cardRowVal {
+  font-weight: 700;
+  color: #fff;
+}
+
+.cardFooter {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 12px;
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 992px) {
+  .desktopTable {
+    display: none;
+  }
+  .pendingCardList {
+    display: flex;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
