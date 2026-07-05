@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@/generated/prisma';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -53,7 +54,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       confirmedAt = null;
     }
 
-    const updatedOrder = await prisma.$transaction(async (tx) => {
+    const updatedOrder = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Update the order
       const order = await tx.customerOrder.update({
         where: { id },
@@ -169,7 +170,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const wasDelivered = oldOrder.status === 'Livree';
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Restore stock if the order was delivered
       if (wasDelivered) {
         await tx.product.update({

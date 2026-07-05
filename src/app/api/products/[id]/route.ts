@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@/generated/prisma';
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -33,7 +34,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const newStock = stockActuel !== undefined ? parseInt(stockActuel) : current.stockActuel;
     const stockDiff = newStock - current.stockActuel;
 
-    const product = await prisma.$transaction(async (tx) => {
+    const product = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const updated = await tx.product.update({
         where: { id },
         data: {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@/generated/prisma';
 
 export async function GET() {
   try {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     const parsedDateReceive = dateReceive ? new Date(dateReceive) : null;
 
     // Use Prisma transaction to ensure atomic operations
-    const supplierOrder = await prisma.$transaction(async (tx) => {
+    const supplierOrder = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Create SupplierOrder
       const order = await tx.supplierOrder.create({
         data: {
