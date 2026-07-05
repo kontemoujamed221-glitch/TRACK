@@ -301,52 +301,102 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Operational Rates */}
-          <div className={styles.ratesGrid}>
-            <div className={styles.rateCard}>
-              <div className={styles.rateHeader}>
-                <span className={styles.rateLabel}>Taux de Livraison</span>
-                <span style={{ color: 'var(--success)', fontWeight: 800 }}>{data.rates.delivered}</span>
+          {/* ── INSIGHTS: Best Sellers + Top Canaux ── */}
+          <div className={styles.detailsGrid} style={{ marginBottom: 0 }}>
+
+            {/* TOP BEST-SELLERS */}
+            <div className="card" style={{ padding: '24px 20px' }}>
+              <div className={styles.sectionHeader} style={{ marginBottom: 18 }}>
+                <span className={styles.sectionTitle}>🏆 Produits Best-Sellers</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Classés par unités vendues</span>
               </div>
-              <span className={styles.rateVal}>{data.rates.delivery.toFixed(1)}%</span>
-              <div className={styles.progressBarContainer}>
-                <div className={`${styles.progressBar} ${styles.progressBarGreen}`} style={{ width: `${data.rates.delivery}%` }}></div>
-              </div>
+              {data.productMargins.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune vente sur la période</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {[...data.productMargins]
+                    .sort((a, b) => b.unitsSold - a.unitsSold)
+                    .map((pm, idx) => {
+                      const maxUnits = Math.max(...data.productMargins.map(p => p.unitsSold), 1);
+                      const pct = (pm.unitsSold / maxUnits) * 100;
+                      const rankColors = ['#f59e0b', '#94a3b8', '#cd7c4f'];
+                      const rankEmoji = ['🥇', '🥈', '🥉'];
+                      return (
+                        <div key={pm.id}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 16 }}>{rankEmoji[idx] || `#${idx + 1}`}</span>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{pm.name}</div>
+                                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{pm.unitsSold} unités vendues</div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--success)' }}>{formatXOF(pm.revenue)}</div>
+                              <div style={{ fontSize: 11, color: pm.netProfit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                                Marge: {formatXOF(pm.netProfit)}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: rankColors[idx] || 'var(--accent)', transition: 'width 0.5s ease' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
 
-            <div className={styles.rateCard}>
-              <div className={styles.rateHeader}>
-                <span className={styles.rateLabel}>Taux de Retour</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 800 }}>{data.rates.returned}</span>
+            {/* TOP CANAUX D'ACQUISITION */}
+            <div className="card" style={{ padding: '24px 20px' }}>
+              <div className={styles.sectionHeader} style={{ marginBottom: 18 }}>
+                <span className={styles.sectionTitle}>📡 Top Canaux d'Acquisition</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Classés par commandes générées</span>
               </div>
-              <span className={styles.rateVal}>{data.rates.return.toFixed(1)}%</span>
-              <div className={styles.progressBarContainer}>
-                <div className={`${styles.progressBar} ${styles.progressBarRed}`} style={{ width: `${data.rates.return}%` }}></div>
-              </div>
-            </div>
-
-            <div className={styles.rateCard}>
-              <div className={styles.rateHeader}>
-                <span className={styles.rateLabel}>Taux d'Annulation</span>
-                <span style={{ color: 'var(--danger)', fontWeight: 800 }}>{data.rates.cancelled}</span>
-              </div>
-              <span className={styles.rateVal}>{data.rates.cancellation.toFixed(1)}%</span>
-              <div className={styles.progressBarContainer}>
-                <div className={`${styles.progressBar} ${styles.progressBarRed}`} style={{ width: `${data.rates.cancellation}%` }}></div>
-              </div>
-            </div>
-
-            <div className={styles.rateCard}>
-              <div className={styles.rateHeader}>
-                <span className={styles.rateLabel}>Commandes en Attente</span>
-                <span style={{ color: 'var(--info)', fontWeight: 800 }}>{data.rates.pending}</span>
-              </div>
-              <span className={styles.rateVal}>{data.rates.total} commandées</span>
-              <div className={styles.progressBarContainer}>
-                <div className={`${styles.progressBar} ${styles.progressBarInfo}`} style={{ width: `${data.rates.total > 0 ? (data.rates.pending / data.rates.total) * 100 : 0}%` }}></div>
-              </div>
+              {data.channelRoi.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center', padding: '24px 0' }}>Aucune donnée de canal sur la période</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {[...data.channelRoi]
+                    .sort((a, b) => b.orderCount - a.orderCount)
+                    .map((cr, idx) => {
+                      const maxOrders = Math.max(...data.channelRoi.map(c => c.orderCount), 1);
+                      const pct = (cr.orderCount / maxOrders) * 100;
+                      const accentColors = ['#6366f1', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b'];
+                      const color = accentColors[idx % accentColors.length];
+                      return (
+                        <div key={cr.channel}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                              <span style={{ width: 24, height: 24, borderRadius: 6, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                                {idx + 1}
+                              </span>
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>{cr.channel}</div>
+                                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{cr.orderCount} commande{cr.orderCount > 1 ? 's' : ''}</div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--success)' }}>{formatXOF(cr.revenue)}</div>
+                              {cr.spend > 0 && (
+                                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                                  Pub: {formatXOF(cr.spend)} · ROI: <span style={{ color: cr.roi >= 200 ? 'var(--success)' : 'var(--accent)', fontWeight: 700 }}>{cr.roi.toFixed(0)}%</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ height: 5, borderRadius: 99, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: color, transition: 'width 0.5s ease' }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
           </div>
+
 
           {/* Sparkline Daily CSS profit evolution bar chart */}
           {data.evolution.length > 0 && (
@@ -370,88 +420,64 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Margins per product & Channel spends */}
-          <div className={styles.detailsGrid}>
-            {/* PRODUCT MARGINS */}
-            <div className="card" style={{ padding: '24px 20px' }}>
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionTitle}>Marge Net par Produit (Lots)</span>
-              </div>
-              <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
-                <table className="table" style={{ fontSize: 13 }}>
-                  <thead>
-                    <tr>
-                      <th>Produit</th>
-                      <th>SKU</th>
-                      <th>Vendus</th>
-                      <th>C.A.</th>
-                      <th>Coût Stock</th>
-                      <th>Frais Livr.</th>
-                      <th style={{ textAlign: 'right' }}>Marge Net</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.productMargins.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Aucun produit vendu</td>
-                      </tr>
-                    ) : (
-                      data.productMargins.map((pm) => (
-                        <tr key={pm.id}>
-                          <td style={{ fontWeight: 700 }}>{pm.name}</td>
-                          <td><code>{pm.sku}</code></td>
-                          <td>{pm.unitsSold} u.</td>
-                          <td>{formatXOF(pm.revenue)}</td>
-                          <td>{formatXOF(pm.costStockSold)}</td>
-                          <td>{formatXOF(pm.shippingFees)}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: pm.netProfit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                            {formatXOF(pm.netProfit)}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+          {/* Detailed Margin Breakdown Table */}
+          <div className="card" style={{ padding: '24px 20px' }}>
+            <div className={styles.sectionHeader} style={{ marginBottom: 16 }}>
+              <span className={styles.sectionTitle}>📊 Analyse Détaillée par Produit</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Coût, Marge & Rentabilité</span>
             </div>
-
-            {/* CHANNEL ADS SPEND & ROI */}
-            <div className="card" style={{ padding: '24px 20px' }}>
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionTitle}>ROI Publicitaire & Acquisition</span>
-              </div>
-              <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
-                <table className="table" style={{ fontSize: 13 }}>
-                  <thead>
+            <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
+              <table className="table" style={{ fontSize: 13 }}>
+                <thead>
+                  <tr>
+                    <th>Produit</th>
+                    <th>SKU</th>
+                    <th style={{ textAlign: 'center' }}>Vendus</th>
+                    <th style={{ textAlign: 'right' }}>C.A. Encaissé</th>
+                    <th style={{ textAlign: 'right' }}>Coût Stock</th>
+                    <th style={{ textAlign: 'right' }}>Frais Livr.</th>
+                    <th style={{ textAlign: 'right' }}>Marge Nette</th>
+                    <th style={{ textAlign: 'right' }}>Marge %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.productMargins.length === 0 ? (
                     <tr>
-                      <th>Canal / Source</th>
-                      <th>Cmds</th>
-                      <th>Dépense Pub</th>
-                      <th>CA Généré</th>
-                      <th style={{ textAlign: 'right' }}>ROI</th>
+                      <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '32px 0' }}>
+                        Aucun produit vendu sur la période sélectionnée
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {data.channelRoi.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Aucune donnée publicitaire</td>
-                      </tr>
-                    ) : (
-                      data.channelRoi.map((cr) => (
-                        <tr key={cr.channel}>
-                          <td style={{ fontWeight: 700 }}>{cr.channel}</td>
-                          <td>{cr.orderCount}</td>
-                          <td style={{ color: 'var(--danger)' }}>{formatXOF(cr.spend)}</td>
-                          <td style={{ color: 'var(--success)' }}>{formatXOF(cr.revenue)}</td>
-                          <td style={{ textAlign: 'right', fontWeight: 800, color: cr.roi >= 100 ? 'var(--success)' : 'var(--text-secondary)' }}>
-                            {cr.roi.toFixed(0)}%
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  ) : (
+                    [...data.productMargins]
+                      .sort((a, b) => b.revenue - a.revenue)
+                      .map((pm) => {
+                        const marginPct = pm.revenue > 0 ? (pm.netProfit / pm.revenue) * 100 : 0;
+                        return (
+                          <tr key={pm.id}>
+                            <td style={{ fontWeight: 700 }}>{pm.name}</td>
+                            <td><code style={{ fontSize: 11 }}>{pm.sku}</code></td>
+                            <td style={{ textAlign: 'center', fontWeight: 700 }}>{pm.unitsSold}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--success)' }}>{formatXOF(pm.revenue)}</td>
+                            <td style={{ textAlign: 'right', color: 'var(--danger)' }}>{pm.costStockSold > 0 ? formatXOF(pm.costStockSold) : <span style={{ color: 'var(--text-secondary)' }}>—</span>}</td>
+                            <td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{pm.shippingFees > 0 ? formatXOF(pm.shippingFees) : '—'}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 800, color: pm.netProfit >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                              {formatXOF(pm.netProfit)}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <span style={{
+                                display: 'inline-block', padding: '2px 8px', borderRadius: 99, fontSize: 11, fontWeight: 700,
+                                background: marginPct >= 30 ? 'rgba(34,197,94,0.15)' : marginPct >= 0 ? 'rgba(251,191,36,0.15)' : 'rgba(239,68,68,0.15)',
+                                color: marginPct >= 30 ? 'var(--success)' : marginPct >= 0 ? '#fbbf24' : 'var(--danger)',
+                              }}>
+                                {marginPct.toFixed(1)}%
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </>

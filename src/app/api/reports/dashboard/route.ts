@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
 const CHANNELS = [
-  'TikTok Ads', 'Facebook Ads', 'Organique TikTok', 
-  'Organique Facebook', 'Instagram', 'WhatsApp', 'Autre'
+  'Meta Ads', 'Organique Facebook',
+  'Instagram', 'WhatsApp', 'Autre'
 ];
 
 export async function GET(request: Request) {

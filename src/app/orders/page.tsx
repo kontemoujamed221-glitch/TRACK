@@ -43,8 +43,8 @@ const CITIES = [
 ];
 
 const CHANNELS = [
-  'TikTok Ads', 'Facebook Ads', 'Organique TikTok', 
-  'Organique Facebook', 'Instagram', 'WhatsApp', 'Autre'
+  'Meta Ads', 'Organique Facebook',
+  'Instagram', 'WhatsApp', 'Autre'
 ];
 
 const STATUSES = [
@@ -78,7 +78,7 @@ export default function OrdersPage() {
   const [ordClientTel, setOrdClientTel] = useState('');
   const [ordClientAddress, setOrdClientAddress] = useState('');
   const [ordClientCity, setOrdClientCity] = useState('Dakar');
-  const [ordSource, setOrdSource] = useState('TikTok Ads');
+  const [ordSource, setOrdSource] = useState('Meta Ads');
   const [ordCampaign, setOrdCampaign] = useState('');
   const [ordPrice, setOrdPrice] = useState('');
   const [ordStatus, setOrdStatus] = useState('Nouvelle');
@@ -279,7 +279,7 @@ export default function OrdersPage() {
     setOrdClientTel('');
     setOrdClientAddress('');
     setOrdClientCity('Dakar');
-    setOrdSource('TikTok Ads');
+    setOrdSource('Meta Ads');
     setOrdCampaign('');
     setOrdStatus('Nouvelle');
     setOrdCourier('');
