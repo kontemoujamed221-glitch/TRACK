@@ -30,4 +30,7 @@ if (isPostgres) {
   console.log('Applying migrations / pushing schema to database...');
   // Use prisma db push to apply the schema to the remote database non-interactively
   execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  
+  console.log('Running database seeding...');
+  execSync('npx prisma db seed', { stdio: 'inherit' });
 }
