@@ -1,15 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 
 let prisma: PrismaClient;
 
+const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.env.DATABASE_URL?.startsWith('postgresql');
+
 if (process.env.NODE_ENV === 'production') {
-  const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.env.DATABASE_URL?.startsWith('postgresql');
   if (isPostgres) {
     // In production with PostgreSQL, use the standard pre-compiled Prisma engine
     prisma = new PrismaClient();
   } else {
     // Fallback to SQLite adapter
+    const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
     const adapter = new PrismaBetterSqlite3({
       url: process.env.DATABASE_URL || 'file:./dev.db',
     });
@@ -21,10 +22,10 @@ if (process.env.NODE_ENV === 'production') {
     prisma?: PrismaClient;
   };
   if (!globalWithPrisma.prisma) {
-    const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.env.DATABASE_URL?.startsWith('postgresql');
     if (isPostgres) {
       globalWithPrisma.prisma = new PrismaClient();
     } else {
+      const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
       const adapter = new PrismaBetterSqlite3({
         url: process.env.DATABASE_URL || 'file:./dev.db',
       });
