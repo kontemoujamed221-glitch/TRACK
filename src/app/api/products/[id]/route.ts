@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { name, sku, category, prixVenteActuel, seuilAlerte, status, stockActuel } = await request.json();
+    const { name, sku, category, prixVenteActuel, seuilAlerte, status, stockActuel, prixAchat, prixTransport } = await request.json();
 
     if (!name || !sku || prixVenteActuel === undefined) {
       return NextResponse.json(
@@ -43,6 +43,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           category: category || '',
           prixVenteActuel: parseFloat(prixVenteActuel),
           seuilAlerte: seuilAlerte ? parseInt(seuilAlerte) : 5,
+          prixAchat: prixAchat !== undefined ? parseFloat(prixAchat) : undefined,
+          prixTransport: prixTransport !== undefined ? parseFloat(prixTransport) : undefined,
           status,
           stockActuel: newStock,
         },

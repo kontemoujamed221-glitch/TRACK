@@ -1,11 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
-const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
 const crypto = require('crypto');
 
-const adapter = new PrismaBetterSqlite3({
-  url: 'file:./dev.db',
-});
-const prisma = new PrismaClient({ adapter });
+let prisma;
+const databaseUrl = process.env.DATABASE_URL || '';
+const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
+
+if (isPostgres) {
+  prisma = new PrismaClient();
+} else {
+  const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
+  const adapter = new PrismaBetterSqlite3({
+    url: databaseUrl || 'file:./dev.db',
+  });
+  prisma = new PrismaClient({ adapter });
+}
 
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');

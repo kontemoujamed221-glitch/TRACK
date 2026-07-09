@@ -44,7 +44,7 @@ const CITIES = [
 
 const CHANNELS = [
   'Meta Ads', 'Organique Facebook',
-  'Instagram', 'WhatsApp', 'Autre'
+  'TikTok Organic', 'Instagram', 'WhatsApp', 'Autre'
 ];
 
 const STATUSES = [
@@ -85,6 +85,7 @@ export default function OrdersPage() {
   const [ordCourier, setOrdCourier] = useState('');
   const [ordShippingFee, setOrdShippingFee] = useState('0');
   const [ordCollected, setOrdCollected] = useState('0');
+  const [isCollectedManuallyEdited, setIsCollectedManuallyEdited] = useState(false);
   const [ordDateOrder, setOrdDateOrder] = useState(new Date().toISOString().substring(0, 10));
   const [ordDateDelivery, setOrdDateDelivery] = useState('');
   const [ordConfirmed, setOrdConfirmed] = useState(false);
@@ -117,6 +118,16 @@ export default function OrdersPage() {
   useEffect(() => {
     fetchInitialData();
   }, []);
+
+  // Auto-calculate collected amount based on price, quantity and shipping if not overridden
+  useEffect(() => {
+    if (!isCollectedManuallyEdited) {
+      const price = parseFloat(ordPrice) || 0;
+      const qty = parseInt(ordQty) || 1;
+      const shipping = parseFloat(ordShippingFee) || 0;
+      setOrdCollected((price * qty + shipping).toString());
+    }
+  }, [ordPrice, ordQty, ordShippingFee, isCollectedManuallyEdited]);
 
   // Compute filtered orders on the fly (client-side matching)
   const filteredOrders = useMemo(() => {
@@ -229,6 +240,11 @@ export default function OrdersPage() {
     setOrdCourier(o.courierName || '');
     setOrdShippingFee(o.shippingFee.toString());
     setOrdCollected(o.amountCollected.toString());
+    
+    // Determine if the collected amount was custom or calculated
+    const isAuto = o.amountCollected === (o.quantity * o.prixVente + o.shippingFee);
+    setIsCollectedManuallyEdited(!isAuto);
+
     setOrdDateOrder(o.dateOrder.substring(0, 10));
     setOrdDateDelivery(o.dateDelivery ? o.dateDelivery.substring(0, 10) : '');
     setOrdConfirmed(o.confirmedByTel);
@@ -285,6 +301,7 @@ export default function OrdersPage() {
     setOrdCourier('');
     setOrdShippingFee('0');
     setOrdCollected('0');
+    setIsCollectedManuallyEdited(false);
     setOrdDateOrder(new Date().toISOString().substring(0, 10));
     setOrdDateDelivery('');
     setOrdConfirmed(false);
@@ -643,7 +660,7 @@ export default function OrdersPage() {
                         </div>
                         <div className="form-group">
                           <label className="form-label" htmlFor="ordCollected">Montant réellement encaissé (FCFA)</label>
-                          <input id="ordCollected" type="number" className="form-input" placeholder={ordPrice ? (parseInt(ordQty) * parseFloat(ordPrice)).toString() : '0'} value={ordCollected} onChange={(e) => setOrdCollected(e.target.value)} />
+                          <input id="ordCollected" type="number" className="form-input" placeholder={ordPrice ? (parseInt(ordQty) * parseFloat(ordPrice)).toString() : '0'} value={ordCollected} onChange={(e) => { setOrdCollected(e.target.value); setIsCollectedManuallyEdited(true); }} />
                         </div>
                         <div className="form-group">
                           <label className="form-label" htmlFor="ordDateDelivery">Date de livraison</label>

@@ -14,6 +14,8 @@ interface Product {
   status: string;
   stockActuel: number;
   seuilAlerte: number;
+  prixAchat?: number;
+  prixTransport?: number;
 }
 
 interface SupplierOrder {
@@ -70,6 +72,8 @@ export default function ProductsPage() {
   const [prodAlert, setProdAlert] = useState('5');
   const [prodStatus, setProdStatus] = useState('actif');
   const [prodStock, setProdStock] = useState('0');
+  const [prodPrixAchat, setProdPrixAchat] = useState('0');
+  const [prodPrixTransport, setProdPrixTransport] = useState('0');
 
   // New Supplier Order Form State
   const [ordProductId, setOrdProductId] = useState('');
@@ -147,6 +151,8 @@ export default function ProductsPage() {
       prixVenteActuel: parseFloat(prodPrice),
       seuilAlerte: parseInt(prodAlert),
       status: prodStatus,
+      prixAchat: parseFloat(prodPrixAchat || '0'),
+      prixTransport: parseFloat(prodPrixTransport || '0'),
     };
 
     // Only send stockActuel when editing (not creating)
@@ -233,6 +239,8 @@ export default function ProductsPage() {
     setProdAlert(p.seuilAlerte.toString());
     setProdStatus(p.status);
     setProdStock(p.stockActuel.toString());
+    setProdPrixAchat(p.prixAchat ? p.prixAchat.toString() : '0');
+    setProdPrixTransport(p.prixTransport ? p.prixTransport.toString() : '0');
     setIsProductModalOpen(true);
   };
 
@@ -271,6 +279,8 @@ export default function ProductsPage() {
     setProdAlert('5');
     setProdStatus('actif');
     setProdStock('0');
+    setProdPrixAchat('0');
+    setProdPrixTransport('0');
   };
 
   const resetOrderForm = () => {
@@ -539,6 +549,14 @@ export default function ProductsPage() {
                   <div className="form-group">
                     <label className="form-label" htmlFor="prodAlert">Seuil d'alerte de stock *</label>
                     <input id="prodAlert" type="number" className="form-input" required value={prodAlert} onChange={(e) => setProdAlert(e.target.value)} placeholder="ex: 5" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prodPrixAchat">Prix d'achat unitaire (FCFA)</label>
+                    <input id="prodPrixAchat" type="number" className="form-input" value={prodPrixAchat} onChange={(e) => setProdPrixAchat(e.target.value)} placeholder="ex: 3000" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="prodPrixTransport">Prix de transport unitaire (FCFA)</label>
+                    <input id="prodPrixTransport" type="number" className="form-input" value={prodPrixTransport} onChange={(e) => setProdPrixTransport(e.target.value)} placeholder="ex: 500" />
                   </div>
                 </div>
                 {editingProduct && (

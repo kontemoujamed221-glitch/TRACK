@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, startTransition } from 'react';
+import { useEffect, useState, startTransition, useMemo } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import styles from './expenses.module.css';
 import { formatXOF, formatDate } from '@/lib/format';
@@ -37,6 +37,9 @@ export default function ExpensesPage() {
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
 
+  // Metrics Period Filter State (for cards at the top)
+  const [metricsPeriod, setMetricsPeriod] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thismonth' | 'all'>('today');
+
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -55,12 +58,7 @@ export default function ExpensesPage() {
   const fetchExpenses = async () => {
     setLoading(true);
     try {
-      const query = new URLSearchParams();
-      if (filterCategory) query.append('category', filterCategory);
-      if (filterStartDate) query.append('startDate', filterStartDate);
-      if (filterEndDate) query.append('endDate', filterEndDate);
-
-      const res = await fetch(`/api/expenses?${query.toString()}`);
+      const res = await fetch('/api/expenses');
       if (!res.ok) throw new Error('Impossible de charger les dépenses.');
       const data = await res.json();
       setExpenses(data);
@@ -73,7 +71,7 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     fetchExpenses();
-  }, [filterCategory, filterStartDate, filterEndDate]);
+  }, []);
 
   // Handle Currency change to auto-fill default rates
   const handleCurrencyChange = (curr: string) => {
@@ -117,6 +115,7 @@ export default function ExpensesPage() {
       setIsModalOpen(false);
       setEditingExpense(null);
       resetForm();
+      setFilterCategory('');
       fetchExpenses();
     } catch (err: any) {
       alert(err.message);
@@ -168,12 +167,70 @@ export default function ExpensesPage() {
     setFileName('');
   };
 
+  // Client-side filtering for the expenses list table
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => {
+      if (filterCategory && e.category !== filterCategory) return false;
+      if (filterStartDate || filterEndDate) {
+        const expenseDate = new Date(e.date);
+        if (filterStartDate && expenseDate < new Date(filterStartDate)) return false;
+        if (filterEndDate) {
+          const end = new Date(filterEndDate);
+          end.setHours(23, 59, 59, 999);
+          if (expenseDate > end) return false;
+        }
+      }
+      return true;
+    });
+  }, [expenses, filterCategory, filterStartDate, filterEndDate]);
+
+  // Client-side filtering for metrics cards based on metricsPeriod
+  const filteredExpensesForMetrics = useMemo(() => {
+    return expenses.filter((e) => {
+      const expenseDate = new Date(e.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(0, 0, 0, 0);
+
+      const startOfToday = today.getTime();
+      const startOfYesterday = yesterday.getTime();
+      const time = expenseDate.getTime();
+
+      if (metricsPeriod === 'today') {
+        return time >= startOfToday && time < startOfToday + 86400000;
+      }
+      if (metricsPeriod === 'yesterday') {
+        return time >= startOfYesterday && time < startOfToday;
+      }
+      if (metricsPeriod === '7days') {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        return time >= sevenDaysAgo.getTime();
+      }
+      if (metricsPeriod === '30days') {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+        return time >= thirtyDaysAgo.getTime();
+      }
+      if (metricsPeriod === 'thismonth') {
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        return time >= startOfMonth.getTime();
+      }
+      return true; // 'all'
+    });
+  }, [expenses, metricsPeriod]);
+
   // Calculate totals
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amountXof, 0);
-  const totalMerc = expenses.filter(e => e.category === 'Achat marchandise').reduce((sum, e) => sum + e.amountXof, 0);
-  const totalPub = expenses.filter(e => e.category === 'Publicité').reduce((sum, e) => sum + e.amountXof, 0);
-  const totalLiv = expenses.filter(e => e.category === 'Livraison').reduce((sum, e) => sum + e.amountXof, 0);
-  const totalOther = expenses.filter(e => e.category === 'Autres frais').reduce((sum, e) => sum + e.amountXof, 0);
+  const totalExpenses = filteredExpensesForMetrics.reduce((sum, e) => sum + e.amountXof, 0);
+  const totalMerc = filteredExpensesForMetrics.filter(e => e.category === 'Achat marchandise').reduce((sum, e) => sum + e.amountXof, 0);
+  const totalPub = filteredExpensesForMetrics.filter(e => e.category === 'Publicité').reduce((sum, e) => sum + e.amountXof, 0);
+  const totalLiv = filteredExpensesForMetrics.filter(e => e.category === 'Livraison').reduce((sum, e) => sum + e.amountXof, 0);
+  const totalOther = filteredExpensesForMetrics.filter(e => e.category === 'Autres frais').reduce((sum, e) => sum + e.amountXof, 0);
 
   // Calculated Converted Price in modal
   const getConvertedPrice = () => {
@@ -199,6 +256,27 @@ export default function ExpensesPage() {
         >
           + Enregistrer une Dépense
         </button>
+      </div>
+
+      {/* Metrics Period Selector */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>Résumé des dépenses</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Période du résumé :</label>
+          <select 
+            className="form-select" 
+            style={{ width: 180, height: 32, padding: '0 8px', fontSize: 13 }}
+            value={metricsPeriod}
+            onChange={(e) => setMetricsPeriod(e.target.value as any)}
+          >
+            <option value="today">Aujourd'hui</option>
+            <option value="yesterday">Hier</option>
+            <option value="7days">7 derniers jours</option>
+            <option value="30days">30 derniers jours</option>
+            <option value="thismonth">Ce mois</option>
+            <option value="all">Tout le temps (Global)</option>
+          </select>
+        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -270,12 +348,12 @@ export default function ExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {expenses.length === 0 ? (
+              {filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Aucune dépense trouvée</td>
                 </tr>
               ) : (
-                expenses.map((e) => {
+                filteredExpenses.map((e) => {
                   const isLinkedToStock = e.description?.startsWith('Achat marchandise - Réf Commande:');
                   return (
                     <tr key={e.id}>

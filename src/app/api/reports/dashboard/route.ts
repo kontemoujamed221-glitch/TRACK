@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db';
 
 const CHANNELS = [
   'Meta Ads', 'Organique Facebook',
-  'Instagram', 'WhatsApp', 'Autre'
+  'TikTok Organic', 'Instagram', 'WhatsApp', 'Autre'
 ];
 
 export async function GET(request: Request) {
@@ -27,19 +27,11 @@ export async function GET(request: Request) {
       endDate.setUTCHours(23, 59, 59, 999);
     }
 
-    // 1. Fetch delivered orders for the period
+    // 1. Fetch delivered orders for the period based on their order date
     const deliveredOrders = await prisma.customerOrder.findMany({
       where: {
         status: 'Livree',
-        OR: [
-          {
-            dateDelivery: { gte: startDate, lte: endDate },
-          },
-          {
-            dateDelivery: null,
-            dateOrder: { gte: startDate, lte: endDate },
-          }
-        ]
+        dateOrder: { gte: startDate, lte: endDate },
       },
     });
 
@@ -109,15 +101,19 @@ export async function GET(request: Request) {
 
     const productWacMap = new Map<string, number>();
     products.forEach((p) => {
-      const totalQty = p.supplierOrders.reduce((sum, o) => sum + o.quantity, 0);
-      if (totalQty > 0) {
-        const totalCost = p.supplierOrders.reduce((sum, o) => {
-          return sum + (o.costUnit * o.quantity * o.exchangeRate + o.transportCustomsFee);
-        }, 0);
-        productWacMap.set(p.id, totalCost / totalQty);
+      if (p.prixAchat && p.prixAchat > 0) {
+        productWacMap.set(p.id, p.prixAchat + (p.prixTransport || 0));
       } else {
-        // If no purchase logged, fallback to WAC = 0 (or estimate based on sale price if we want, but 0 is standard)
-        productWacMap.set(p.id, 0);
+        const totalQty = p.supplierOrders.reduce((sum, o) => sum + o.quantity, 0);
+        if (totalQty > 0) {
+          const totalCost = p.supplierOrders.reduce((sum, o) => {
+            return sum + (o.costUnit * o.quantity * o.exchangeRate + o.transportCustomsFee);
+          }, 0);
+          productWacMap.set(p.id, totalCost / totalQty);
+        } else {
+          // If no purchase logged, fallback to WAC = 0
+          productWacMap.set(p.id, 0);
+        }
       }
     });
 
@@ -204,7 +200,7 @@ export async function GET(request: Request) {
     }
 
     deliveredOrders.forEach((o) => {
-      const dateStr = o.dateDelivery ? o.dateDelivery.toISOString().substring(0, 10) : o.dateOrder.toISOString().substring(0, 10);
+      const dateStr = o.dateOrder.toISOString().substring(0, 10);
       const dayData = dateMap.get(dateStr);
       if (dayData) {
         dayData.revenue += o.amountCollected;

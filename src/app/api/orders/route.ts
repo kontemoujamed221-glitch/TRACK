@@ -112,7 +112,7 @@ export async function POST(request: Request) {
           status,
           courierName: courierName || '',
           shippingFee: shipFee,
-          amountCollected: status === 'Livree' ? (collected || price) : collected,
+          amountCollected: status === 'Livree' ? (collected || (price * qty + shipFee)) : collected,
           dateOrder: parsedDateOrder,
           dateDelivery: parsedDateDelivery,
           confirmedByTel: isConfirmed,

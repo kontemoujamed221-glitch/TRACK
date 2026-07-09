@@ -71,7 +71,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           status,
           courierName: courierName || '',
           shippingFee: shipFee,
-          amountCollected: isDelivered ? (collected || price) : collected,
+          amountCollected: isDelivered ? (collected || (price * qty + shipFee)) : collected,
           dateOrder: parsedDateOrder,
           dateDelivery: parsedDateDelivery,
           confirmedByTel: isConfirmed,

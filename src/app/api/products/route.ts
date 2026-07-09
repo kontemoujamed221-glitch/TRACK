@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, sku, category, prixVenteActuel, seuilAlerte } = await request.json();
+    const { name, sku, category, prixVenteActuel, seuilAlerte, prixAchat, prixTransport } = await request.json();
 
     if (!name || !sku || prixVenteActuel === undefined) {
       return NextResponse.json(
@@ -41,6 +41,8 @@ export async function POST(request: Request) {
         category: category || '',
         prixVenteActuel: parseFloat(prixVenteActuel),
         seuilAlerte: seuilAlerte ? parseInt(seuilAlerte) : 5,
+        prixAchat: prixAchat ? parseFloat(prixAchat) : 0,
+        prixTransport: prixTransport ? parseFloat(prixTransport) : 0,
         stockActuel: 0, // Starts at 0, updated via SupplierOrders or stock movements
         status: 'actif',
       },

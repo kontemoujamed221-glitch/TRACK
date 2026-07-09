@@ -2,6 +2,7 @@
 
 import { useEffect, useState, startTransition } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
+import DashboardChart from '@/components/DashboardChart';
 import styles from './dashboard.module.css';
 import { formatXOF } from '@/lib/format';
 
@@ -398,26 +399,9 @@ export default function Dashboard() {
           </div>
 
 
-          {/* Sparkline Daily CSS profit evolution bar chart */}
+          {/* Sparkline Daily profit evolution chart */}
           {data.evolution.length > 0 && (
-            <div className={styles.chartContainer}>
-              <div className={styles.chartHeader}>
-                <span className={styles.chartTitle}>Évolution Journalière du Chiffre d'Affaires</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Mise à jour en direct</span>
-              </div>
-              <div className={styles.barChart}>
-                {data.evolution.map((day) => {
-                  const percentage = (day.revenue / maxEvolutionValue) * 100;
-                  const formatDayStr = day.date.substring(8, 10) + '/' + day.date.substring(5, 7);
-                  return (
-                    <div className={styles.chartBarWrapper} key={day.date} title={`${day.date} : CA ${formatXOF(day.revenue)} / Charges ${formatXOF(day.expenses)}`}>
-                      <div className={styles.chartBar} style={{ height: `${Math.max(percentage, 2)}%` }}></div>
-                      <span className={styles.chartDate}>{formatDayStr}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <DashboardChart evolution={data.evolution} />
           )}
 
           {/* Detailed Margin Breakdown Table */}
