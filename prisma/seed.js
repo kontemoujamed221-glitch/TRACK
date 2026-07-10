@@ -16,7 +16,7 @@ const databaseUrl = process.env.DATABASE_URL || '';
 const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
 
 if (isPostgres) {
-  prisma = new PrismaClient();
+  prisma = new PrismaClient({ datasourceUrl: databaseUrl });
 } else {
   const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
   const adapter = new PrismaBetterSqlite3({
