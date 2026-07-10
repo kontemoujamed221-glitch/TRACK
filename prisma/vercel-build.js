@@ -2,9 +2,19 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Vercel Postgres injects POSTGRES_PRISMA_URL
-if (process.env.POSTGRES_PRISMA_URL) {
-  process.env.DATABASE_URL = process.env.POSTGRES_PRISMA_URL;
+// Detect DATABASE_URL from various providers:
+// - Vercel Postgres injects POSTGRES_PRISMA_URL
+// - Supabase on Vercel injects postgres_POSTGRES_URL / postgres_POSTGRES_URL_NON_POOLING
+const resolvedUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_PRISMA_URL ||
+  process.env.postgres_POSTGRES_URL_NON_POOLING ||
+  process.env.postgres_POSTGRES_URL ||
+  '';
+
+if (resolvedUrl && !process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = resolvedUrl;
+  console.log('Resolved DATABASE_URL from provider environment variable.');
 }
 
 const databaseUrl = process.env.DATABASE_URL || '';

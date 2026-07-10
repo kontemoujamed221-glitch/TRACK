@@ -2,6 +2,15 @@ import { PrismaClient } from '@prisma/client';
 
 let prisma: PrismaClient;
 
+// Resolve DATABASE_URL from various providers (Supabase, Vercel Postgres, etc.)
+if (!process.env.DATABASE_URL) {
+  const fallback =
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.postgres_POSTGRES_URL_NON_POOLING ||
+    process.env.postgres_POSTGRES_URL;
+  if (fallback) process.env.DATABASE_URL = fallback;
+}
+
 const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.env.DATABASE_URL?.startsWith('postgresql');
 
 if (process.env.NODE_ENV === 'production') {

@@ -2,6 +2,16 @@ const { PrismaClient } = require('@prisma/client');
 const crypto = require('crypto');
 
 let prisma;
+
+// Resolve DATABASE_URL from various providers (Supabase, Vercel Postgres, etc.)
+if (!process.env.DATABASE_URL) {
+  const fallback =
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.postgres_POSTGRES_URL_NON_POOLING ||
+    process.env.postgres_POSTGRES_URL;
+  if (fallback) process.env.DATABASE_URL = fallback;
+}
+
 const databaseUrl = process.env.DATABASE_URL || '';
 const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
 
