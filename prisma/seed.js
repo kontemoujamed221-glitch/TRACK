@@ -16,13 +16,11 @@ const databaseUrl = process.env.DATABASE_URL || '';
 const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
 
 if (isPostgres) {
-  prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: databaseUrl,
-      },
-    },
-  });
+  const { Pool } = require('pg');
+  const { PrismaPg } = require('@prisma/adapter-pg');
+  const pool = new Pool({ connectionString: databaseUrl });
+  const adapter = new PrismaPg(pool);
+  prisma = new PrismaClient({ adapter });
 } else {
   const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
   const adapter = new PrismaBetterSqlite3({

@@ -15,14 +15,12 @@ const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.e
 
 if (process.env.NODE_ENV === 'production') {
   if (isPostgres) {
-    // In production with PostgreSQL, pass datasource URL explicitly
-    prisma = new PrismaClient({
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
-    } as any);
+    // In production with PostgreSQL, use standard PrismaPg adapter
+    const { Pool } = require('pg');
+    const { PrismaPg } = require('@prisma/adapter-pg');
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ adapter });
   } else {
     // Fallback to SQLite adapter
     const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
@@ -35,16 +33,15 @@ if (process.env.NODE_ENV === 'production') {
   // In development, bind Prisma to global scope to prevent duplicate instances during hot-reload
   const globalWithPrisma = global as typeof globalThis & {
     prisma?: PrismaClient;
+    pgPool?: any;
   };
   if (!globalWithPrisma.prisma) {
     if (isPostgres) {
-      globalWithPrisma.prisma = new PrismaClient({
-        datasources: {
-          db: {
-            url: process.env.DATABASE_URL,
-          },
-        },
-      } as any);
+      const { Pool } = require('pg');
+      const { PrismaPg } = require('@prisma/adapter-pg');
+      globalWithPrisma.pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const adapter = new PrismaPg(globalWithPrisma.pgPool);
+      globalWithPrisma.prisma = new PrismaClient({ adapter });
     } else {
       const { PrismaBetterSqlite3 } = require('@prisma/adapter-better-sqlite3');
       const adapter = new PrismaBetterSqlite3({
