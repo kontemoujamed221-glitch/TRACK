@@ -18,7 +18,12 @@ const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith(
 if (isPostgres) {
   const { Pool } = require('pg');
   const { PrismaPg } = require('@prisma/adapter-pg');
-  const pool = new Pool({ connectionString: databaseUrl });
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
   const adapter = new PrismaPg(pool);
   prisma = new PrismaClient({ adapter });
 } else {

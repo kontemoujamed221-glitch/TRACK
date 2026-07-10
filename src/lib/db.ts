@@ -18,7 +18,12 @@ if (process.env.NODE_ENV === 'production') {
     // In production with PostgreSQL, use standard PrismaPg adapter
     const { Pool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    });
     const adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
   } else {
@@ -39,7 +44,12 @@ if (process.env.NODE_ENV === 'production') {
     if (isPostgres) {
       const { Pool } = require('pg');
       const { PrismaPg } = require('@prisma/adapter-pg');
-      globalWithPrisma.pgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      globalWithPrisma.pgPool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      });
       const adapter = new PrismaPg(globalWithPrisma.pgPool);
       globalWithPrisma.prisma = new PrismaClient({ adapter });
     } else {
