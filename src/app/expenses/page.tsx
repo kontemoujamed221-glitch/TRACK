@@ -38,7 +38,7 @@ export default function ExpensesPage() {
   const [filterEndDate, setFilterEndDate] = useState('');
 
   // Metrics Period Filter State (for cards at the top)
-  const [metricsPeriod, setMetricsPeriod] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thismonth' | 'all'>('today');
+  const [metricsPeriod, setMetricsPeriod] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thismonth' | 'all'>('30days');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);

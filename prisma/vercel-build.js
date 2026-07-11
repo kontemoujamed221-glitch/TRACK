@@ -36,11 +36,18 @@ if (isPostgres) {
 console.log('Generating Prisma Client...');
 execSync('npx prisma generate', { stdio: 'inherit' });
 
+// NOTE: We do not run 'prisma db push' and 'prisma db seed' during the Vercel build phase.
+// This prevents build failures due to database connection pooling, SSL certificate checks,
+// or unique constraints when the database has already been seeded.
+// Run migrations or db push manually from your local environment when the schema changes:
+// DATABASE_URL="your-connection-string" npx prisma db push
+/*
 if (isPostgres) {
   console.log('Applying migrations / pushing schema to database...');
-  // Use prisma db push to apply the schema to the remote database non-interactively
   execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
   
   console.log('Running database seeding...');
   execSync('npx prisma db seed', { stdio: 'inherit' });
 }
+*/
+

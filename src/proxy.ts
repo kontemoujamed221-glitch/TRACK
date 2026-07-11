@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-for-dev-only';
 
 const PUBLIC_PAGES = ['/login'];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files and next internals
@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    console.log(`[Middleware] Route: ${request.method} ${pathname} | Token: ${token ? 'Présent' : 'Absent'} | Payload: ${payload ? 'Valide' : 'Invalide/Expiré'}`);
+    console.log(`[Proxy] Route: ${request.method} ${pathname} | Token: ${token ? 'Présent' : 'Absent'} | Payload: ${payload ? 'Valide' : 'Invalide/Expiré'}`);
 
     if (!payload) {
       return NextResponse.json({ error: 'Session non autorisée ou expirée.' }, { status: 401 });
