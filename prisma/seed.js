@@ -15,11 +15,25 @@ if (!process.env.DATABASE_URL) {
 const databaseUrl = process.env.DATABASE_URL || '';
 const isPostgres = databaseUrl.startsWith('postgres') || databaseUrl.startsWith('postgresql');
 
+function cleanDatabaseUrl(url) {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete('sslmode');
+    parsed.searchParams.delete('sslcert');
+    parsed.searchParams.delete('sslkey');
+    parsed.searchParams.delete('sslrootcert');
+    return parsed.toString();
+  } catch (err) {
+    return url;
+  }
+}
+
 if (isPostgres) {
   const { Pool } = require('pg');
   const { PrismaPg } = require('@prisma/adapter-pg');
   const pool = new Pool({
-    connectionString: databaseUrl,
+    connectionString: cleanDatabaseUrl(databaseUrl),
     ssl: {
       rejectUnauthorized: false,
     },

@@ -13,13 +13,27 @@ if (!process.env.DATABASE_URL) {
 
 const isPostgres = process.env.DATABASE_URL?.startsWith('postgres') || process.env.DATABASE_URL?.startsWith('postgresql');
 
+function cleanDatabaseUrl(url: string | undefined): string | undefined {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete('sslmode');
+    parsed.searchParams.delete('sslcert');
+    parsed.searchParams.delete('sslkey');
+    parsed.searchParams.delete('sslrootcert');
+    return parsed.toString();
+  } catch (err) {
+    return url;
+  }
+}
+
 if (process.env.NODE_ENV === 'production') {
   if (isPostgres) {
     // In production with PostgreSQL, use standard PrismaPg adapter
     const { Pool } = require('pg');
     const { PrismaPg } = require('@prisma/adapter-pg');
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: cleanDatabaseUrl(process.env.DATABASE_URL),
       ssl: {
         rejectUnauthorized: false,
       },
@@ -45,7 +59,7 @@ if (process.env.NODE_ENV === 'production') {
       const { Pool } = require('pg');
       const { PrismaPg } = require('@prisma/adapter-pg');
       globalWithPrisma.pgPool = new Pool({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: cleanDatabaseUrl(process.env.DATABASE_URL),
         ssl: {
           rejectUnauthorized: false,
         },
