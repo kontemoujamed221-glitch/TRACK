@@ -29,6 +29,20 @@ if (isPostgres) {
   schema = schema.replace(/provider\s*=\s*"sqlite"/g, 'provider = "postgresql"');
   fs.writeFileSync(schemaPath, schema, 'utf8');
   console.log('Switched datasource provider to "postgresql".');
+
+  // Ensure Prisma CLI can connect to self-signed databases during db push / seed
+  try {
+    const parsed = new URL(databaseUrl);
+    parsed.searchParams.set('sslaccept', 'accept_invalid_certs');
+    process.env.DATABASE_URL = parsed.toString();
+    console.log('Appended sslaccept=accept_invalid_certs to DATABASE_URL.');
+  } catch (err) {
+    if (databaseUrl.includes('?')) {
+      process.env.DATABASE_URL = databaseUrl + '&sslaccept=accept_invalid_certs';
+    } else {
+      process.env.DATABASE_URL = databaseUrl + '?sslaccept=accept_invalid_certs';
+    }
+  }
 } else {
   console.log('--- LOCAL BUILD: SQLITE DETECTED ---');
 }
@@ -36,12 +50,6 @@ if (isPostgres) {
 console.log('Generating Prisma Client...');
 execSync('npx prisma generate', { stdio: 'inherit' });
 
-// NOTE: We do not run 'prisma db push' and 'prisma db seed' during the Vercel build phase.
-// This prevents build failures due to database connection pooling, SSL certificate checks,
-// or unique constraints when the database has already been seeded.
-// Run migrations or db push manually from your local environment when the schema changes:
-// DATABASE_URL="your-connection-string" npx prisma db push
-/*
 if (isPostgres) {
   console.log('Applying migrations / pushing schema to database...');
   execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
@@ -49,5 +57,4 @@ if (isPostgres) {
   console.log('Running database seeding...');
   execSync('npx prisma db seed', { stdio: 'inherit' });
 }
-*/
 
