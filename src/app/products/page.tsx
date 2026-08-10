@@ -45,7 +45,10 @@ interface StockMovement {
   date: string;
 }
 
+import { useToast } from '@/components/Toast';
+
 export default function ProductsPage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'catalog' | 'suppliers' | 'flux'>('catalog');
   const [products, setProducts] = useState<Product[]>([]);
   const [supplierOrders, setSupplierOrders] = useState<SupplierOrder[]>([]);
@@ -178,11 +181,13 @@ export default function ProductsPage() {
 
       // Close modal & reset fields
       setIsProductModalOpen(false);
+      const isEdit = !!editingProduct;
       setEditingProduct(null);
       resetProductForm();
       fetchData();
+      toast.success(isEdit ? 'Produit modifié avec succès.' : 'Votre produit a été enregistré avec succès.');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Une erreur est survenue.');
     }
   };
 
@@ -222,11 +227,13 @@ export default function ProductsPage() {
       }
 
       setIsOrderModalOpen(false);
+      const isEdit = !!editingOrder;
       setEditingOrder(null);
       resetOrderForm();
       fetchData();
+      toast.success(isEdit ? "Commande fournisseur modifiée avec succès." : "Achat fournisseur enregistré avec succès.");
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Une erreur est survenue.');
     }
   };
 

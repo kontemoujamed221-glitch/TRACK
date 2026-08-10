@@ -57,12 +57,24 @@ interface DashboardData {
   productMargins: ProductMargin[];
   channelRoi: ChannelRoi[];
   evolution: EvolutionData[];
+  lowStockProducts?: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    stockActuel: number;
+    seuilAlerte: number;
+  }>;
+  deliveredMetaAdsCount?: number;
+  totalShopifyOrders?: number;
+  dateKey?: string;
 }
 
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shopifyOrdersInput, setShopifyOrdersInput] = useState<string>('');
+  const [savingShopifyMetric, setSavingShopifyMetric] = useState<boolean>(false);
 
   // Period filters
   const [period, setPeriod] = useState<'today' | '7days' | '30days' | 'thismonth' | 'custom'>('30days');
@@ -104,10 +116,34 @@ export default function Dashboard() {
       if (!res.ok) throw new Error('Impossible de charger le rapport du tableau de bord.');
       const report = await res.json();
       setData(report);
+      if (report.totalShopifyOrders !== undefined) {
+        setShopifyOrdersInput(report.totalShopifyOrders.toString());
+      }
     } catch (err: any) {
       setError(err.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveShopifyOrders = async (val: string) => {
+    setShopifyOrdersInput(val);
+    const count = parseInt(val) || 0;
+    setSavingShopifyMetric(true);
+    try {
+      const dateKey = data?.dateKey || 'default';
+      await fetch('/api/shopify-metric', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dateStr: dateKey, totalShopifyOrders: count }),
+      });
+      if (data) {
+        setData({ ...data, totalShopifyOrders: count });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingShopifyMetric(false);
     }
   };
 
@@ -263,6 +299,83 @@ export default function Dashboard() {
         <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-secondary)' }}>Calcul des KPIs financiers...</div>
       ) : (
         <>
+          {/* SHOPIFY DELIVERY RATE CARD */}
+          <div className="card" style={{ marginBottom: 24, padding: 24, background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.14))', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 20 }}>🛍️</span>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>
+                    Taux de Livraison Shopify (Meta Ads)
+                  </h3>
+                </div>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Mesurez l'efficacité réelle de livraison par rapport aux commandes brutes enregistrées sur votre boutique Shopify.
+                </p>
+              </div>
+
+              {/* Effective Delivery Rate Display */}
+              {(() => {
+                const gross = parseInt(shopifyOrdersInput) || data.totalShopifyOrders || 0;
+                const deliveredMeta = data.deliveredMetaAdsCount || 0;
+                const rate = gross > 0 ? ((deliveredMeta / gross) * 100).toFixed(1) : '0.0';
+                const numRate = parseFloat(rate);
+                const badgeClass = numRate >= 50 ? 'status-success' : numRate >= 30 ? 'status-warning' : 'status-danger';
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Taux Effectif</div>
+                      <div style={{ fontSize: 28, fontWeight: 900, color: numRate >= 50 ? '#10b981' : numRate >= 30 ? '#f59e0b' : '#ef4444' }}>
+                        {rate}%
+                      </div>
+                    </div>
+                    <span className={`badge ${badgeClass}`} style={{ fontSize: 13, padding: '6px 12px' }}>
+                      {numRate >= 50 ? 'Excellente livraison' : numRate >= 30 ? 'Livraison moyenne' : 'Faible livraison'}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginTop: 20, paddingTop: 16, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+              {/* Input Box */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <label style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  1. Commandes Brutes Shopify (Saisie)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    style={{ width: '100%', fontSize: 16, fontWeight: 700, borderColor: 'var(--border-focus)' }}
+                    placeholder="ex: 22"
+                    value={shopifyOrdersInput}
+                    onChange={(e) => handleSaveShopifyOrders(e.target.value)}
+                  />
+                  {savingShopifyMetric && <span style={{ fontSize: 11, color: 'var(--accent)', whiteSpace: 'nowrap' }}>Sauvegarde...</span>}
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
+                  Entrez le nombre de commandes brutes de la boutique
+                </span>
+              </div>
+
+              {/* Meta Ads Delivered Count */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', padding: 14, borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  2. Commandes Livrées Meta Ads (Base)
+                </span>
+                <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
+                  {data.deliveredMetaAdsCount || 0} livraison(s)
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
+                  Commandes livrées issues du canal Meta Ads
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Key Financials */}
           <div className={styles.financialsGrid}>
             <div className="card" style={{ display: 'flex', flexDirection: 'column', padding: 24 }}>
@@ -285,6 +398,100 @@ export default function Dashboard() {
                 {formatXOF(data.profitNet)}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '8px' }}>Bénéfice direct de la période après charges</span>
+            </div>
+          </div>
+
+          {/* DETAILED EXPENSES BREAKDOWN CARD */}
+          <div className="card" style={{ marginBottom: 24, padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', margin: 0 }}>
+                  📊 Ventilation Détaillée des Dépenses par Catégorie
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                  Suivi transparent et exact de chaque centime dépensé sur la période
+                </p>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase' }}>Total Dépenses</span>
+                <div style={{ fontSize: 20, fontWeight: 900, color: 'var(--danger)' }}>
+                  {formatXOF(data.totalExpenses)}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              {/* Category 1: Achat marchandise */}
+              {(() => {
+                const amt = data.expensesBreakdown?.merchandise || 0;
+                const pct = data.totalExpenses > 0 ? ((amt / data.totalExpenses) * 100).toFixed(1) : '0.0';
+                return (
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>📦 Achat Marchandise</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '2px 6px', borderRadius: 4 }}>{pct}%</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#f59e0b', marginBottom: 8 }}>{formatXOF(amt)}</div>
+                    <div style={{ width: '100%', height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: 3 }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Category 2: Publicité */}
+              {(() => {
+                const amt = data.expensesBreakdown?.advertising || 0;
+                const pct = data.totalExpenses > 0 ? ((amt / data.totalExpenses) * 100).toFixed(1) : '0.0';
+                return (
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>📢 Publicité</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6', background: 'rgba(59,130,246,0.12)', padding: '2px 6px', borderRadius: 4 }}>{pct}%</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#3b82f6', marginBottom: 8 }}>{formatXOF(amt)}</div>
+                    <div style={{ width: '100%', height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: '#3b82f6', borderRadius: 3 }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Category 3: Livraison */}
+              {(() => {
+                const amt = data.expensesBreakdown?.shipping || 0;
+                const pct = data.totalExpenses > 0 ? ((amt / data.totalExpenses) * 100).toFixed(1) : '0.0';
+                return (
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>🚚 Livraison & Logistique</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 6px', borderRadius: 4 }}>{pct}%</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#10b981', marginBottom: 8 }}>{formatXOF(amt)}</div>
+                    <div style={{ width: '100%', height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: '#10b981', borderRadius: 3 }} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Category 4: Autres frais */}
+              {(() => {
+                const amt = data.expensesBreakdown?.other || 0;
+                const pct = data.totalExpenses > 0 ? ((amt / data.totalExpenses) * 100).toFixed(1) : '0.0';
+                return (
+                  <div style={{ background: 'rgba(0,0,0,0.25)', padding: 16, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>⚙️ Autres Frais</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#8e8e93', background: 'rgba(142,142,147,0.12)', padding: '2px 6px', borderRadius: 4 }}>{pct}%</span>
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#8e8e93', marginBottom: 8 }}>{formatXOF(amt)}</div>
+                    <div style={{ width: '100%', height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: '#8e8e93', borderRadius: 3 }} />
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

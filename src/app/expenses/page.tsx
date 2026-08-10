@@ -5,6 +5,8 @@ import DashboardLayout from '@/components/DashboardLayout';
 import styles from './expenses.module.css';
 import { formatXOF, formatDate } from '@/lib/format';
 
+import { useToast } from '@/components/Toast';
+
 interface Expense {
   id: string;
   category: string;
@@ -28,6 +30,7 @@ const CATEGORIES = [
 ];
 
 export default function ExpensesPage() {
+  const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,12 +116,14 @@ export default function ExpensesPage() {
       }
 
       setIsModalOpen(false);
+      const isEdit = !!editingExpense;
       setEditingExpense(null);
       resetForm();
       setFilterCategory('');
       fetchExpenses();
+      toast.success(isEdit ? 'Dépense modifiée avec succès.' : 'Votre dépense a été enregistrée avec succès.');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Une erreur est survenue.');
     }
   };
 

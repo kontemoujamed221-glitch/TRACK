@@ -222,6 +222,29 @@ export async function GET(request: Request) {
       })
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    const lowStockProducts = products
+      .filter((p) => p.status === 'actif' && (p.stockActuel <= 20 || p.stockActuel <= p.seuilAlerte))
+      .map((p) => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        stockActuel: p.stockActuel,
+        seuilAlerte: p.seuilAlerte,
+      }));
+
+    const deliveredMetaAdsCount = deliveredOrders.filter(
+      (o) => o.source && (o.source.toLowerCase().includes('meta') || o.source.toLowerCase().includes('facebook'))
+    ).length;
+
+    const dateKey = startDateParam && endDateParam ? `${startDateParam}_${endDateParam}` : 'default';
+    const shopifyMetricRecord = (prisma as any).shopifyMetric
+      ? await (prisma as any).shopifyMetric.findFirst({
+          where: { dateStr: { in: [dateKey, 'default'] } },
+          orderBy: { updatedAt: 'desc' },
+        })
+      : null;
+    const totalShopifyOrders = shopifyMetricRecord ? shopifyMetricRecord.totalShopifyOrders : 0;
+
     return NextResponse.json({
       revenue,
       revenuePotentiel,
@@ -233,6 +256,10 @@ export async function GET(request: Request) {
       productMargins: productMarginsList,
       channelRoi: channelRoiList,
       evolution,
+      lowStockProducts,
+      deliveredMetaAdsCount,
+      totalShopifyOrders,
+      dateKey,
     });
   } catch (error) {
     console.error('Failed to generate dashboard report:', error);

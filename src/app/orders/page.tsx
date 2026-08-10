@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import styles from './orders.module.css';
 import { formatXOF, formatDate } from '@/lib/format';
+import { useToast } from '@/components/Toast';
 
 interface Product {
   id: string;
@@ -33,7 +34,7 @@ interface Order {
   confirmedByTel: boolean;
   confirmedAt?: string | null;
   note?: string;
-  createdBy?: { name: string } | null;
+  createdBy?: { id?: string; name: string; role?: string } | null;
   createdAt: string;
 }
 
@@ -53,6 +54,7 @@ const STATUSES = [
 ];
 
 export default function OrdersPage() {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -217,11 +219,13 @@ export default function OrdersPage() {
       }
 
       setIsModalOpen(false);
+      const isEdit = !!editingOrder;
       setEditingOrder(null);
       resetForm();
       fetchInitialData();
+      toast.success(isEdit ? 'Commande modifiée avec succès.' : 'Votre commande a été enregistrée avec succès.');
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Une erreur est survenue.');
     }
   };
 
@@ -407,6 +411,7 @@ export default function OrdersPage() {
                   <th>Produit / Qté</th>
                   <th>Total (FCFA)</th>
                   <th>Canal</th>
+                  <th>Saisie par</th>
                   <th>Confirmation</th>
                   <th>Statut</th>
                   <th style={{ textAlign: 'right' }}>Actions</th>
@@ -415,7 +420,7 @@ export default function OrdersPage() {
               <tbody>
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Aucune commande trouvée</td>
+                    <td colSpan={10} style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Aucune commande trouvée</td>
                   </tr>
                 ) : (
                   filteredOrders.map((o) => (
@@ -435,6 +440,12 @@ export default function OrdersPage() {
                       <td>
                         <div>{o.source}</div>
                         {o.campaign && <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{o.campaign}</div>}
+                      </td>
+                      <td>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(250, 204, 21, 0.08)', padding: '3px 8px', borderRadius: '6px', border: '1px solid rgba(250, 204, 21, 0.15)' }}>
+                          <span>👤</span>
+                          <span>{o.createdBy?.name || 'Inconnu'}</span>
+                        </div>
                       </td>
                       <td>
                         {o.confirmedByTel ? (
@@ -498,6 +509,12 @@ export default function OrdersPage() {
                     <div className={styles.cardRow}>
                       <span className={styles.cardRowLabel}>Réf :</span>
                       <span className={styles.cardRowVal} style={{ fontSize: 12 }}><code>{o.id}</code></span>
+                    </div>
+                    <div className={styles.cardRow}>
+                      <span className={styles.cardRowLabel}>Saisie par :</span>
+                      <span className={styles.cardRowVal} style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>
+                        👤 {o.createdBy?.name || 'Inconnu'}
+                      </span>
                     </div>
                     <div className={styles.cardRow}>
                       <span className={styles.cardRowLabel}>Produit :</span>

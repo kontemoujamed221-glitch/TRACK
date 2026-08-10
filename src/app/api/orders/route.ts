@@ -44,7 +44,7 @@ export async function GET(request: Request) {
           select: { name: true, sku: true, prixVenteActuel: true },
         },
         createdBy: {
-          select: { name: true },
+          select: { id: true, name: true, role: true },
         },
       },
       orderBy: { createdAt: 'desc' },

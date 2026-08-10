@@ -19,8 +19,9 @@ model User {
   updatedAt     DateTime        @updatedAt
   
   // Relations
-  customerOrders CustomerOrder[]
-  expenses       Expense[]
+  customerOrders     CustomerOrder[]
+  expenses           Expense[]
+  motorcycleRevenues MotorcycleRevenue[]
 }
 
 model Product {
@@ -117,4 +118,24 @@ model Expense {
   createdBy    User?    @relation(fields: [createdById], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model ShopifyMetric {
+  id                 String   @id @default(uuid())
+  dateStr            String   @unique // e.g. "2026-08-10" or "default"
+  totalShopifyOrders Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model MotorcycleRevenue {
+  id          String   @id @default(uuid())
+  date        DateTime @default(now())
+  amount      Float    // Amount in XOF generated that day
+  driverName  String?  // Name of driver / courier (optional)
+  notes       String?  // Optional comments / details
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
