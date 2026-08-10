@@ -223,7 +223,7 @@ export default function OrdersPage() {
       setEditingOrder(null);
       resetForm();
       fetchInitialData();
-      toast.success(isEdit ? 'Commande modifiée avec succès.' : 'Votre commande a été enregistrée avec succès.');
+      toast.success(isEdit ? 'Commande modifiée avec succès.' : 'La commande a été créée avec succès ! 🎉');
     } catch (err: any) {
       toast.error(err.message || 'Une erreur est survenue.');
     }
