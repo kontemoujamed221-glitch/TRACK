@@ -54,7 +54,11 @@ if (isPostgres) {
   console.log('Applying migrations / pushing schema to database...');
   execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
   
-  console.log('Running database seeding...');
-  execSync('npx prisma db seed', { stdio: 'inherit' });
+  try {
+    console.log('Running database seeding...');
+    execSync('npx prisma db seed', { stdio: 'inherit' });
+  } catch (seedErr) {
+    console.warn('Seeding warning (non-fatal, continuing build):', seedErr.message);
+  }
 }
 
