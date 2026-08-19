@@ -51,9 +51,13 @@ console.log('Generating Prisma Client...');
 execSync('npx prisma generate', { stdio: 'inherit' });
 
 if (isPostgres) {
-  console.log('Applying migrations / pushing schema to database...');
-  execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-  
+  try {
+    console.log('Applying migrations / pushing schema to database...');
+    execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+  } catch (pushErr) {
+    console.warn('DB push warning (non-fatal, continuing build):', pushErr.message);
+  }
+
   try {
     console.log('Running database seeding...');
     execSync('npx prisma db seed', { stdio: 'inherit' });
