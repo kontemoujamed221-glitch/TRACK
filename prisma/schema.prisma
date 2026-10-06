@@ -67,8 +67,8 @@ model User {
 model Business {
   id          String         @id @default(cuid())
   name        String
-  country     String         @default("Sénégal") // Sénégal ou Gambie
-  currency    String         @default("XOF")     // XOF (FCFA) ou GMD (Dalasi)
+  country     String         @default("Gambie")  // Gambie
+  currency    String         @default("GMD")     // GMD (Dalasi)
   description String?
   active      Boolean        @default(true)
   createdAt   DateTime       @default(now())
@@ -240,8 +240,8 @@ model CashRemittance {
 model DeliveryZone {
   id                 String   @id @default(cuid())
   name               String
-  country            String   @default("Sénégal")
-  city               String   @default("Dakar")
-  defaultDeliveryFee Int      @default(2000) // ex: 2000 FCFA
+  country            String   @default("Gambie")
+  city               String   @default("Kanifing")
+  defaultDeliveryFee Int      @default(150) // ex: 150 GMD
   active             Boolean  @default(true)
 }
