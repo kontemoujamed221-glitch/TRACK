@@ -1,32 +1,45 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { ToastProvider } from "@/components/Toast";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "CODTRACK — Plateforme de Gestion E-commerce COD Sénégal",
-  description: "Outil de pilotage de ventes en dropshipping / Cash on Delivery au Sénégal, avec gestion des stocks, suivi de rentabilité et rapprochement financier.",
+  title: "Gambia Track — Pilotage E-commerce & COD Gambie 🇬🇲",
+  description:
+    "Plateforme de gestion opérationnelle et financière en paiement à la livraison (COD) pour le business e-commerce en Gambie (Banjul, Serrekunda & West Coast).",
+  icons: {
+    icon: "/favicon.ico",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gambia Track",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#020617",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="fr" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body suppressHydrationWarning>
-        <ToastProvider>{children}</ToastProvider>
+    <html lang="fr" className={`${inter.variable} h-full antialiased dark`}>
+      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 font-sans overscroll-none">
+        {children}
       </body>
     </html>
   );

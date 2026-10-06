@@ -1,141 +1,247 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "sqlite"
+enum Role {
+  OWNER_ADMIN
+  CONFIRMATOR
+  DELIVERY_AGENT
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  IN_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+enum MovementType {
+  IN_ARRIVAGE
+  OUT_DELIVERY
+  RETURN_RESTOCK
+  ADJUSTMENT_LOSS
+}
+
+enum ExpenseCategory {
+  ADS_FACEBOOK
+  ADS_TIKTOK
+  INVENTORY_PURCHASE
+  SHIPPING_LOGISTICS
+  SALARY_COMMISSION
+  TOOLS_SUBSCRIPTIONS
+  OTHER
+}
+
+enum RemittanceStatus {
+  PENDING
+  VERIFIED
+  DISPUTED
 }
 
 model User {
-  id            String          @id @default(uuid())
-  name          String
-  email         String          @unique
-  passwordHash  String
-  role          String          @default("user") // "admin", "user"
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  
-  // Relations
-  customerOrders     CustomerOrder[]
-  expenses           Expense[]
-  motorcycleRevenues MotorcycleRevenue[]
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(OWNER_ADMIN)
+  phone        String?
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  businesses   UserBusiness[]
+  deliveries   Order[]        @relation("DeliveryAgentOrders")
+  confirmations Order[]       @relation("ConfirmerOrders")
+  remittances  CashRemittance[]
+  history      StatusHistory[]
+}
+
+model Business {
+  id          String         @id @default(cuid())
+  name        String
+  country     String         @default("Sénégal") // Sénégal ou Gambie
+  currency    String         @default("XOF")     // XOF (FCFA) ou GMD (Dalasi)
+  description String?
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  users       UserBusiness[]
+  products    Product[]
+  orders      Order[]
+  expenses    Expense[]
+  remittances CashRemittance[]
+}
+
+model UserBusiness {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, businessId])
 }
 
 model Product {
-  id               String           @id @default(uuid())
-  name             String
-  sku              String           @unique
-  category         String?
-  image            String?          // URL or base64 or placeholder
-  prixVenteActuel  Float            // In XOF
-  status           String           @default("actif") // "actif", "en_rupture", "archive"
-  stockActuel      Int              @default(0)
-  seuilAlerte      Int              @default(5)
-  prixAchat        Float            @default(0)
-  prixTransport    Float            @default(0)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id             String          @id @default(cuid())
+  businessId     String
+  name           String
+  sku            String
+  image          String?
+  salePrice      Int             // En FCFA (sans décimales)
+  costPrice      Int             // Coût de revient estimé (Achat + transport + douane)
+  alertThreshold Int             @default(5)
+  currentStock   Int             @default(0) // Stock physique disponible
+  reservedStock  Int             @default(0) // Stock réservé (confirmé, non encore livré)
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  // Relations
-  supplierOrders   SupplierOrder[]
-  stockMovements   StockMovement[]
-  customerOrders   CustomerOrder[]
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  batches        ProductBatch[]
+  movements      StockMovement[]
+  orderItems     OrderItem[]
 }
 
-model SupplierOrder {
-  id                   String      @id @default(uuid())
-  productId            String
-  product              Product     @relation(fields: [productId], references: [id])
-  quantity             Int
-  costUnit             Float       // Cost in original currency
-  currency             String      // "USD", "CNY", etc.
-  exchangeRate         Float       // Conversion to XOF
-  transportCustomsFee  Float       // Global shipping and customs fee for this lot in XOF
-  costRevientUnit      Float       // Real calculated unit cost in XOF
-  status               String      @default("commande") // "commande", "en_transit", "recu", "dedouane"
-  dateOrder            DateTime
-  dateReceive          DateTime?
-  supplierName         String?
-  supplierLink         String?
-  createdAt            DateTime    @default(now())
-  updatedAt            DateTime    @updatedAt
+model ProductBatch {
+  id               String   @id @default(cuid())
+  productId        String
+  batchNumber      String
+  quantityReceived Int
+  unitPurchaseCost Int
+  unitShippingCost Int      @default(0)
+  unitCustomsCost  Int      @default(0)
+  totalCostPerUnit Int
+  supplier         String?
+  receivedDate     DateTime @default(now())
+  notes            String?
+
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model StockMovement {
-  id          String   @id @default(uuid())
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  type        String   // "entree", "sortie", "ajustement"
-  quantity    Int      // Positive value
-  refId       String?  // Reference ID (e.g. SupplierOrder.id or CustomerOrder.id)
-  notes       String?
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id            String       @id @default(cuid())
+  productId     String
+  type          MovementType
+  quantity      Int          // Quantité déplacée (+ ou -)
+  previousStock Int
+  newStock      Int
+  reason        String?
+  orderId       String?
+  createdAt     DateTime     @default(now())
+
+  product       Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-model CustomerOrder {
-  id              String    @id @default(uuid())
+model Order {
+  id               String          @id @default(cuid())
+  businessId       String
+  orderNumber      String          @unique
+  customerName     String
+  customerPhone    String
+  deliveryAddress  String
+  zone             String
+  source           String          @default("Facebook Ads") // Facebook, TikTok, WhatsApp, etc.
+  status           OrderStatus     @default(NEW)
+  failReason       String?         // Injoignable, Refus, Adresse introuvable, etc.
+  totalAmount      Int             // Montant total à encaisser en FCFA
+  deliveryFee      Int             @default(0) // Frais de livraison inclus ou ajoutés
+  deliveryAgentId  String?
+  confirmerId      String?
+  deliveredAt      DateTime?
+  cancelledAt      DateTime?
+  notes            String?
+  cashRemittanceId String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  business         Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  deliveryAgent    User?           @relation("DeliveryAgentOrders", fields: [deliveryAgentId], references: [id])
+  confirmer        User?           @relation("ConfirmerOrders", fields: [confirmerId], references: [id])
+  remittance       CashRemittance? @relation(fields: [cashRemittanceId], references: [id])
+  items            OrderItem[]
+  statusHistory    StatusHistory[]
+}
+
+model OrderItem {
+  id              String   @id @default(cuid())
+  orderId         String
   productId       String
-  product         Product   @relation(fields: [productId], references: [id])
-  quantity        Int
-  clientName      String
-  clientTel       String
-  clientAddress   String?
-  clientCity      String    // e.g. "Dakar", "Thies", etc.
-  source          String    // e.g. "TikTok Ads", "Facebook Ads", "WhatsApp", etc.
-  campaign        String?   // Free text campaign identifier
-  prixVente       Float     // Sale price applied to this order (XOF)
-  status          String    @default("Nouvelle") // "Nouvelle", "Confirmee", "En livraison", "Livree", "Retournee", "Annulee", "Injoignable"
-  courierName     String?   // Delivery driver / service
-  shippingFee     Float     @default(0) // Shipping fee paid to driver (XOF)
-  amountCollected Float     @default(0) // Actual amount collected from client (XOF)
-  dateOrder       DateTime  @default(now())
-  dateDelivery    DateTime?
-  confirmedByTel  Boolean   @default(false)
-  confirmedAt     DateTime?
-  note            String?
-  createdById     String?
-  createdBy       User?     @relation(fields: [createdById], references: [id])
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  productName     String
+  quantity        Int      @default(1)
+  unitPrice       Int
+  frozenCostPrice Int      // Coût de revient figé au moment de la commande
+
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id])
+}
+
+model StatusHistory {
+  id            String       @id @default(cuid())
+  orderId       String
+  fromStatus    OrderStatus?
+  toStatus      OrderStatus
+  changedById   String
+  changedByName String
+  note          String?
+  createdAt     DateTime     @default(now())
+
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user          User?        @relation(fields: [changedById], references: [id])
 }
 
 model Expense {
-  id           String   @id @default(uuid())
-  category     String   // "Achat marchandise", "Publicite", "Livraison", "Autres frais"
-  subcategory  String?  // e.g. platform name (TikTok Ads), subscription name, etc.
-  amount       Float    // Original amount
-  currency     String   @default("XOF")
-  exchangeRate Float    @default(1.0)
-  amountXof    Float    // Converted to XOF
-  date         DateTime
-  description  String?
-  receiptUrl   String?  // Attachment URL
-  createdById  String?
-  createdBy    User?    @relation(fields: [createdById], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String          @id @default(cuid())
+  businessId    String?         // Nullable si dépense partagée entre tous les business
+  date          DateTime        @default(now())
+  category      ExpenseCategory
+  amount        Int             // En FCFA
+  paymentMethod String          @default("Wave") // Wave, Orange Money, Espèces, etc.
+  note          String?
+  receiptUrl    String?         // URL Vercel Blob du justificatif
+  adPlatform    String?         // Facebook Ads, TikTok Ads
+  campaignName  String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  business      Business?       @relation(fields: [businessId], references: [id], onDelete: Cascade)
 }
 
-model ShopifyMetric {
-  id                 String   @id @default(uuid())
-  dateStr            String   @unique // e.g. "2026-08-10" or "default"
-  totalShopifyOrders Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+model CashRemittance {
+  id              String           @id @default(cuid())
+  deliveryAgentId String
+  businessId      String
+  date            DateTime         @default(now())
+  expectedAmount  Int              // Montant attendu des commandes livrées
+  remittedAmount  Int              // Montant effectivement remis par le livreur
+  discrepancy     Int              @default(0) // Écart (remitted - expected)
+  status          RemittanceStatus @default(PENDING)
+  verifiedById    String?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  deliveryAgent   User             @relation(fields: [deliveryAgentId], references: [id])
+  business        Business         @relation(fields: [businessId], references: [id])
+  orders          Order[]
 }
 
-model MotorcycleRevenue {
-  id          String   @id @default(uuid())
-  date        DateTime @default(now())
-  amount      Float    // Amount in XOF generated that day
-  driverName  String?  // Name of driver / courier (optional)
-  notes       String?  // Optional comments / details
-  createdById String?
-  createdBy   User?    @relation(fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model DeliveryZone {
+  id                 String   @id @default(cuid())
+  name               String
+  country            String   @default("Sénégal")
+  city               String   @default("Dakar")
+  defaultDeliveryFee Int      @default(2000) // ex: 2000 FCFA
+  active             Boolean  @default(true)
 }
